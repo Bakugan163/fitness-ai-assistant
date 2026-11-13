@@ -1,6 +1,5 @@
 package com.mityaev.fitnessai.config;
 
-import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,24 +10,29 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity // Включает механизм безопасности Spring Security
 public class SecurityConfig {
 
-    @Bean
+       @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // 1. Настраиваем правила доступа
             .authorizeHttpRequests(auth -> auth
-                // Используем PathRequest.toH2Console() — это официальный и надежный способ
-                // Он автоматически определяет все внутренние пути H2 Console
-                .requestMatchers(PathRequest.toH2Console()).permitAll()
-                // Все остальные страницы требуют авторизации
+                // Разрешаем H2 Console (используем наш проверенный импорт)
+                .requestMatchers(org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toH2Console()).permitAll()
+                
+                // Разрешаем Swagger
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                
+                // Разрешаем доступ к нашему API пользователей
+                .requestMatchers("/api/v1/users/**").permitAll()
+                
+                // Все остальное - только после логина
                 .anyRequest().authenticated()
             )
-            // 2. Отключаем CSRF-защиту ТОЛЬКО для H2 Console
-            // H2 Console — это сторонний инструмент, он не умеет работать с CSRF-токенами
+            // 2. Отключаем CSRF для H2 и нашего API (чтобы POST-запросы проходили)
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers(PathRequest.toH2Console())
+                // Используем простые строки! Это самый надежный способ.
+                .ignoringRequestMatchers("/h2-console/**", "/api/v1/users/**")
             )
-            // 3. Разрешаем использование фреймов для того же домена
-            // Интерфейс H2 Console построен на HTML-фреймах, которые Spring Security блокирует
+            // 3. Разрешаем фреймы для H2 Console
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())
             );

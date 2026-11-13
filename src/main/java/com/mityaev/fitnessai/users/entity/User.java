@@ -25,6 +25,17 @@ public class User {
     @Column(unique = true, nullable = false) // В базе email должен быть уникальным и не пустым (NOT NULL)
     private String email;
 
+    @Column(nullable = false)
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Column(nullable = false) // Пароль не может быть пустым (NOT NULL)
     private String password;
 

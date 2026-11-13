@@ -107,7 +107,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-h2console</artifactId>			 
-	</dependency>
+		</dependency>
+	<!-- Swagger / OpenAPI для Spring Boot 4 -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.2.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

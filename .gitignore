@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Локальная база данных H2
+/data/
+*.mv.db

@@ -23,4 +23,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // Найди пользователя по номеру телефона (добавили, так как ты добавил поле)
     Optional<User> findByPhoneNumber(String phoneNumber);
+
+    // Проверяет, существует ли пользователь с таким email (вернет true/false)
+    boolean existsByEmail(String email);
+
+    // Проверяет, существует ли пользователь с таким номером телефона
+    boolean existsByPhoneNumber(String phoneNumber);
 }
