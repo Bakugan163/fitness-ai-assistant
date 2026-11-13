@@ -2,7 +2,7 @@ spring:
   application:
     name: fitness-ai-assistant
 
-  # Отключаем Docker Compose, чтобы приложение не падало
+  # Отключаем Docker Compose
   docker:
     compose:
       enabled: false
@@ -14,15 +14,22 @@ spring:
     username: sa
     password:
 
+  # НОВЫЙ БЛОК: Включаем веб-консоль H2
+  h2:
+    console:
+      enabled: true        # Включает консоль
+      path: /h2-console    # Задает адрес, по которому она будет доступна
+      settings:
+        web-allow-others: false # Разрешаем доступ только с локального компьютера
+
   # JPA / Hibernate
   jpa:
     hibernate:
-      # Временно ставим update, чтобы Hibernate сам создавал таблицы по сущностям
       ddl-auto: update
     database-platform: org.hibernate.dialect.H2Dialect
-    show-sql: true # Чтобы видеть SQL-запросы в логах (удобно для дебага)
+    show-sql: true
 
-  # Отключаем Flyway (так как миграции мы писали под PostgreSQL)
+  # Отключаем Flyway
   flyway:
     enabled: false
 
