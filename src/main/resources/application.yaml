@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: fitness-ai-assistant
+
+  # Отключаем Docker Compose, чтобы приложение не падало
+  docker:
+    compose:
+      enabled: false
+
+  # Настройки H2 (в памяти)
+  datasource:
+    url: jdbc:h2:mem:fitnessdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA / Hibernate
+  jpa:
+    hibernate:
+      # Временно ставим update, чтобы Hibernate сам создавал таблицы по сущностям
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true # Чтобы видеть SQL-запросы в логах (удобно для дебага)
+
+  # Отключаем Flyway (так как миграции мы писали под PostgreSQL)
+  flyway:
+    enabled: false
+
+server:
+  port: 8080
