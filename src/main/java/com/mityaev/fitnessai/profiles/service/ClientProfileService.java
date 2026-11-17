@@ -1,12 +1,16 @@
 package com.mityaev.fitnessai.profiles.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mityaev.fitnessai.profiles.dto.ClientProfileResponse;
 import com.mityaev.fitnessai.profiles.dto.CreateClientProfileRequest;
 import com.mityaev.fitnessai.profiles.entity.ClientProfile;
+import com.mityaev.fitnessai.profiles.entity.FitnessGoal;
 import com.mityaev.fitnessai.profiles.exception.InvalidAgeException;
+import com.mityaev.fitnessai.profiles.exception.InvalidGoalCombinationException;
 import com.mityaev.fitnessai.profiles.exception.ProfileAlreadyExistsException;
 import com.mityaev.fitnessai.profiles.repository.ClientProfileRepository;
 import com.mityaev.fitnessai.users.entity.User;
@@ -43,6 +47,8 @@ public class ClientProfileService {
             throw new InvalidAgeException("Возраст не может быть меньше 14 лет");
         }
 
+        validateGoals(request.goals());
+
         // 4. Создаем сущность профиля и заполняем её данными
         ClientProfile profile = new ClientProfile();
         profile.setUser(user); // Привязываем профиль к найденному пользователю
@@ -52,6 +58,9 @@ public class ClientProfileService {
         profile.setWeightKg(request.weightKg());
         profile.setActivityLevel(request.activityLevel());
         profile.setExperienceLevel(request.experienceLevel());
+        profile.setTrainingPlace(request.trainingPlace());
+        profile.setGoals(request.goals() != null ? request.goals() : new java.util.ArrayList<>());
+        profile.setEquipment(request.equipment() != null ? request.equipment() : new java.util.ArrayList<>());
 
         // 5. Сохраняем в базу
         ClientProfile savedProfile = clientProfileRepository.save(profile);
@@ -71,7 +80,31 @@ public class ClientProfileService {
                 profile.getWeightKg(),
                 profile.getActivityLevel(),
                 profile.getExperienceLevel(),
+                profile.getTrainingPlace(), 
+                profile.getGoals(),         
+                profile.getEquipment(),     
                 profile.getCreatedAt()
         );
+    }
+
+        // Валидация: проверяем, что клиент не выбрал противоречащие друг другу цели
+    private void validateGoals(List<FitnessGoal> goals) {
+        if (goals == null || goals.isEmpty()) {
+            return; // Если цели не передали, пропускаем (или можно кинуть ошибку)
+        }
+
+        // Если выбрано "Похудение" и "Набор массы" одновременно
+        if (goals.contains(FitnessGoal.WEIGHT_LOSS) && goals.contains(FitnessGoal.MUSCLE_GAIN)) {
+            throw new InvalidGoalCombinationException("Нельзя одновременно худеть и набирать мышечную массу");
+        }
+        // Если выбрано "Похудение" и "Поддержание"
+        if (goals.contains(FitnessGoal.WEIGHT_LOSS) && goals.contains(FitnessGoal.MAINTENANCE)) {
+            throw new InvalidGoalCombinationException("Нельзя одновременно худеть и поддерживать вес");
+        }
+        // Если выбрано "Набор массы" и "Сушка"
+        if (goals.contains(FitnessGoal.MUSCLE_GAIN) && goals.contains(FitnessGoal.CUTTING)) {
+            throw new InvalidGoalCombinationException("Нельзя одновременно набирать массу и сушиться");
+        }
+        // И так далее по нашему ТЗ... (можно добавить остальные проверки)
     }
 }

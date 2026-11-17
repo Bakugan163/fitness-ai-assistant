@@ -1,5 +1,6 @@
 package com.mityaev.fitnessai.profiles.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,8 +22,12 @@ import com.mityaev.fitnessai.profiles.dto.ClientProfileResponse;
 import com.mityaev.fitnessai.profiles.dto.CreateClientProfileRequest;
 import com.mityaev.fitnessai.profiles.entity.ActivityLevel;
 import com.mityaev.fitnessai.profiles.entity.ClientProfile;
+import com.mityaev.fitnessai.profiles.entity.Equipment;
 import com.mityaev.fitnessai.profiles.entity.ExperienceLevel;
+import com.mityaev.fitnessai.profiles.entity.FitnessGoal;
 import com.mityaev.fitnessai.profiles.entity.Gender;
+import com.mityaev.fitnessai.profiles.entity.TrainingPlace;
+import com.mityaev.fitnessai.profiles.exception.InvalidGoalCombinationException;
 import com.mityaev.fitnessai.profiles.exception.ProfileAlreadyExistsException;
 import com.mityaev.fitnessai.profiles.repository.ClientProfileRepository;
 import com.mityaev.fitnessai.users.entity.User;
@@ -52,7 +57,10 @@ public class ClientProfileServiceTest {
 
         // Готовим запрос от клиента
         CreateClientProfileRequest request = new CreateClientProfileRequest(
-                Gender.MALE, 25, 180.5, 80.0, ActivityLevel.MODERATE, ExperienceLevel.BEGINNER
+                Gender.MALE, 25, 180.5, 80.0, ActivityLevel.MODERATE, ExperienceLevel.BEGINNER,
+                TrainingPlace.GYM,                         // Новое поле
+                List.of(FitnessGoal.MUSCLE_GAIN),          // Новое поле
+                List.of(Equipment.BARBELL, Equipment.DUMBBELLS)
         );
 
         // УЧИМ НАШИ ФЕЙКИ ПРАВИЛЬНО ОТВЕЧАТЬ:
@@ -90,7 +98,10 @@ public class ClientProfileServiceTest {
         user.setEmail(userEmail);
 
         CreateClientProfileRequest request = new CreateClientProfileRequest(
-                Gender.MALE, 25, 180.5, 80.0, ActivityLevel.MODERATE, ExperienceLevel.BEGINNER
+                Gender.MALE, 25, 180.5, 80.0, ActivityLevel.MODERATE, ExperienceLevel.BEGINNER,
+                TrainingPlace.GYM,                         
+                List.of(FitnessGoal.MUSCLE_GAIN),          
+                List.of(Equipment.BARBELL, Equipment.DUMBBELLS)
         );
 
         // Учим фейк userRepository возвращать юзера
@@ -111,6 +122,44 @@ public class ClientProfileServiceTest {
 
         // И САМОЕ ВАЖНОЕ: проверяем, что метод save() в репозитории НЕ ВЫЗЫВАЛСЯ (never)
         // Ведь если профиль уже есть, мы не должны пытаться сохранить его снова!
+        verify(clientProfileRepository, never()).save(any(ClientProfile.class));
+    }
+
+        @Test
+    public void shouldThrowExceptionWhenGoalsConflict() {
+        // 1. ARRANGE (Подготовка)
+        String userEmail = "conflict@example.com";
+        User user = new User();
+        user.setEmail(userEmail);
+
+        // Создаем запрос, где клиент хочет одновременно ПОХУДЕТЬ и НАБРАТЬ МАССУ
+        CreateClientProfileRequest request = new CreateClientProfileRequest(
+                Gender.MALE, 
+                25, 
+                180.5, 
+                80.0, 
+                ActivityLevel.MODERATE, 
+                ExperienceLevel.BEGINNER,
+                TrainingPlace.GYM,
+                List.of(FitnessGoal.WEIGHT_LOSS, FitnessGoal.MUSCLE_GAIN), // <-- КОНФЛИКТ!
+                List.of(Equipment.NONE)
+        );
+
+        // Учим фейки отвечать
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(clientProfileRepository.existsByUserEmail(userEmail)).thenReturn(false);
+
+        // 2. ACT & 3. ASSERT
+        // Проверяем, что сервис выкинет наше кастомное исключение
+        InvalidGoalCombinationException exception = assertThrows(
+                InvalidGoalCombinationException.class,
+                () -> clientProfileService.createProfile(request, userEmail)
+        );
+
+        // Проверяем текст ошибки
+        assertEquals("Нельзя одновременно худеть и набирать мышечную массу", exception.getMessage());
+
+        // Убеждаемся, что мы даже не пытались сохранить профиль в базу
         verify(clientProfileRepository, never()).save(any(ClientProfile.class));
     }
 

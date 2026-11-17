@@ -2,11 +2,14 @@ package com.mityaev.fitnessai.profiles.entity;
 
 // ИМПОРТЫ: стандарт JPA для работы с БД
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID; // * означает, что мы импортируем все аннотации JPA (Entity, Table, Id и т.д.)
 
 import com.mityaev.fitnessai.users.entity.User; // Для работы с датой и временем создания/обновления
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;          // Для уникального ID профиля
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -62,6 +65,23 @@ public class ClientProfile {
     @Enumerated(EnumType.STRING)
     @Column(name = "experience_level", nullable = false)
     private ExperienceLevel experienceLevel;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrainingPlace trainingPlace;
+
+     @ElementCollection(targetClass = FitnessGoal.class)
+    @CollectionTable(name = "client_profile_goals", joinColumns = @JoinColumn(name = "profile_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "goal")
+    private java.util.List<FitnessGoal> goals = new java.util.ArrayList<>();
+
+    // То же самое для инвентаря
+    @ElementCollection(targetClass = Equipment.class)
+    @CollectionTable(name = "client_profile_equipment", joinColumns = @JoinColumn(name = "profile_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "equipment")
+    private java.util.List<Equipment> equipment = new java.util.ArrayList<>();
 
     // updatable = false: Мы не сможем изменить дату создания после того, как запись сохранена.
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -165,6 +185,30 @@ public class ClientProfile {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public TrainingPlace getTrainingPlace() {
+        return trainingPlace;
+    }
+
+    public void setTrainingPlace(TrainingPlace trainingPlace) {
+        this.trainingPlace = trainingPlace;
+    }
+
+    public List<FitnessGoal> getGoals() {
+        return goals;
+    }
+
+    public void setGoals(List<FitnessGoal> goals) {
+        this.goals = goals;
+    }
+
+    public List<Equipment> getEquipment() {
+        return equipment;
+    }
+
+    public void setEquipment(List<Equipment> equipment) {
+        this.equipment = equipment;
     }
 
    
